@@ -119,7 +119,7 @@ ErrSection = "completeInformationFromAnalisys40-" & i
         
         If isNotFound Then
             ' Create a new row with OrderLocation "Jaraguá", PhysicalStock 1320 and include Incoterm
-            Call AddNewRow(wsTarget, targetColMap, wsSource.Cells(i, sourceColDict("PEP")).Row, sourceColMap)
+            Call AddNewRowFromAnalysis(wsTarget, targetColMap, wsSource.Cells(i, sourceColDict("PEP")).Row, sourceColMap)
         Else
             
             ' Check in wich column is the correct value for the following call
@@ -262,7 +262,7 @@ ErrorHandler:
     GoTo CleanExit
 End Sub
 
-Sub AddNewRow(wsTarget As Worksheet, targetColMap As Object, wsSourceRow As Range, sourceColMap As Object)
+Sub AddNewRowFromAnalysis(wsTarget As Worksheet, targetColMap As Object, wsSourceRow As Range, sourceColMap As Object)
     Dim tbl As ListObject
     Dim newRow As ListRow
     ' Reference the table in wsTarget
