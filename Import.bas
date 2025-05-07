@@ -50,23 +50,15 @@ ErrSection = "variableDeclarations10"
     Dim targetColMap As Object
     Set targetColMap = MapTargetColumnHeaders()
     
-    ' Setup SAP and check if it is running
-    Do While Not SetupSAPScripting
-        ' Ask the user to initiate SAP or cancel
-        Dim response As VbMsgBoxResult
-        response = MsgBox("SAP não está acessível. Inicie o SAP e clique em OK para tentar novamente, ou Cancelar para sair.", vbOKCancel + vbExclamation, "Aguardando SAP")
-    
-        If response = vbCancel Then
-            MsgBox "Execução encerrada pelo usuário.", vbInformation
-            GoTo CleanExit  ' Exit the function or sub
-        End If
-    Loop
+    ' Find the last used row and column in the source sheet
+    targetLastRow = wsTarget.Cells(wsSource.Rows.Count, 1).End(xlUp).Row
+    targetLastCol = wsTarget.Cells(2, wsSource.Columns.Count).End(xlToLeft).Column
 
-ErrSection = "completeInformationFromAnalisys"
+ErrSection = "OpenSource"
 
     ' Open the workbook Reunião de Faturamento Semanal - New Layout.xlsm
-    Workbooks.Open "\\brjgs100\DFSWEG\GROUPS\BR_SC_JGS_WAU_ADM_CONTRATOS\ACIONAMENTOS\00-EQUIPE DE APOIO\00-BANCO DE DADOS\ANALYSIS_ADCON_WAU.xlsm"
-    exportWbName = "ANALYSIS_ADCON_WAU.xlsm"
+    Workbooks.Open "https://weg365.sharepoint.com/teams/BR-WAU-VENDAS-ADMCONTRATOS/Shared%20Documents/REUNI%C3%83O%20DE%20FATURAMENTO/Reuni%C3%A3o%20de%20Faturamento%20Semanal%20-%20New%20Layout.xlsm"
+    exportWbName = "Reunião de Faturamento Semanal - New Layout"
     
     tries = 0
 
@@ -91,19 +83,14 @@ ErrSection = "completeInformationFromAnalisys"
         DoEvents
     Loop
 
-    ' Set worksheets
-    Set wsSource = exportWb.Sheets("ADCON_WAU GERAL")
-    Set wsTarget = wbThis.Sheets("FATURAMENTO")
+ErrSection = "SourceSheet"
 
-ErrSection = "completeInformationFromAnalisys10"
+    ' Set worksheets
+    Set wsSource = exportWb.Sheets("Faturamento")
 
      If wsSource Is Nothing Or wsTarget Is Nothing Then
         GoTo ErrorHandler
     End If
-
-    ' Find the last used row and column in the source sheet
-    targetLastRow = wsTarget.Cells(wsSource.Rows.Count, 1).End(xlUp).Row
-    targetLastCol = wsTarget.Cells(2, wsSource.Columns.Count).End(xlToLeft).Column
 
 ErrSection = "completeInformationFromAnalisys20"
     
@@ -505,50 +492,6 @@ Function GetColumnIndex(ws As Worksheet, headerName As String, Optional headerRo
             End If
         End If
     Next col
-End Function
-
-Function SetupSAPScripting() As Boolean
-    
-    ' Create the SAP GUI scripting engine object
-    On Error Resume Next
-    Set SapGuiAuto = GetObject("SAPGUI")
-    On Error GoTo ErrorHandler
-    
-    If Not IsObject(SapGuiAuto) Or SapGuiAuto Is Nothing Then
-        SetupSAPScripting = False
-        Exit Function
-    End If
-    
-    On Error Resume Next
-    Set SAPApplication = SapGuiAuto.GetScriptingEngine
-    On Error GoTo ErrorHandler
-    
-    If Not IsObject(SAPApplication) Or SAPApplication Is Nothing Then
-        SetupSAPScripting = False
-        Exit Function
-    End If
-    
-    ' Get the first connection and session
-    On Error GoTo ErrorHandler
-    Set Connection = SAPApplication.Children(0)
-    Set session = Connection.Children(0)
-    On Error GoTo ErrorHandler
-    
-    SetupSAPScripting = True
-    
-    If False Then
-ErrorHandler:
-    SetupSAPScripting = False
-    End If
-    
-End Function
-
-Function EndSAPScripting()
-    ' Clean up
-    Set session = Nothing
-    Set Connection = Nothing
-    Set SAPApplication = Nothing
-    Set SapGuiAuto = Nothing
 End Function
 
 Function OptimizeCodeExecution(enable As Boolean)
