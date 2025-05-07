@@ -119,7 +119,7 @@ ErrSection = "completeInformationFromAnalisys40-" & i
         
         If isNotFound Then
             ' Create a new row with OrderLocation "Jaraguá", PhysicalStock 1320 and include Incoterm
-            ' Call AddNewRow(wsTarget, colDict, Date, sourcePEP, sourceMaterial, "Jaraguá", 1320, sourceIncoterms)
+            Call AddNewRow(wsTarget, targetColMap, wsSource.Cells(i, sourceColDict("PEP")).Row, sourceColMap)
         Else
             
             ' Check in wich column is the correct value for the following call
@@ -262,10 +262,7 @@ ErrorHandler:
     GoTo CleanExit
 End Sub
 
-Sub AddNewRow(wsTarget As Worksheet, colDict As Object, _
-                   sourceDate As Date, sourcePEP As Variant, sourceMaterial As Variant, _
-                   orderLocation As String, physicalStock As Variant, _
-                   sourceIncoterms As Variant)
+Sub AddNewRow(wsTarget As Worksheet, targetColMap As Object, wsSourceRow As Range, sourceColMap As Object)
     Dim tbl As ListObject
     Dim newRow As ListRow
     ' Reference the table in wsTarget
@@ -274,18 +271,22 @@ Sub AddNewRow(wsTarget As Worksheet, colDict As Object, _
     Set newRow = tbl.ListRows.Add
     
     ' Populate the new row with values
-    newRow.Range.Cells(1, colDict("Date")).Value = sourceDate
-    newRow.Range.Cells(1, colDict("PEP")).Value = sourcePEP
-    newRow.Range.Cells(1, colDict("ZETO")).Value = sourceMaterial
-    newRow.Range.Cells(1, colDict("ZVA1")).Value = sourceMaterial
-    newRow.Range.Cells(1, colDict("OrderLocation")).Value = orderLocation
-    newRow.Range.Cells(1, colDict("Incoterm")).Value = sourceIncoterms
-    newRow.Range.Cells(1, colDict("StockStatus")).Value = "OK"
-    newRow.Range.Cells(1, colDict("Checklist")).Value = "PENDENTE"
-    newRow.Range.Cells(1, colDict("Freight")).Value = "PENDENTE"
-    newRow.Range.Cells(1, colDict("Status")).Value = "AGUARD. PM"
-    newRow.Range.Cells(1, colDict("PhysicalStock")).Value = physicalStock
-    
+    newRow.Range.Cells(1, targetColMap("DATA")).Value = Day(Date)
+    newRow.Range.Cells(1, targetColMap("ANO")).Value = Year(Date)
+    newRow.Range.Cells(1, targetColMap("MÊS")).Value = Month(Date)
+    ' newRow.Range.Cells(1, targetColMap("NOTA")).Value = ""
+    ' newRow.Range.Cells(1, targetColMap("DATA FIM")).Value = ""
+    ' newRow.Range.Cells(1, targetColMap("DATA DOC.")).Value = ""
+    newRow.Range.Cells(1, targetColMap("ORDEM DE VENDA")).Value = wsSourceRow.Cells(1, sourceColMap("Doc. Vendas")).Value
+    newRow.Range.Cells(1, targetColMap("DATA PREP")).Value = wsSourceRow.Cells(1, sourceColMap("Data Prep.")).Value
+    newRow.Range.Cells(1, targetColMap("VALOR (BRL)")).Value = wsSourceRow.Cells(1, sourceColMap("Valor")).Value
+    newRow.Range.Cells(1, targetColMap("CLIENTE")).Value = wsSourceRow.Cells(1, sourceColMap("Cliente")).Value
+    newRow.Range.Cells(1, targetColMap("PEP")).Value = wsSourceRow.Cells(1, sourceColMap("PEP")).Value
+    ' newRow.Range.Cells(1, targetColMap("SCORECARD")).Value = ""
+    ' newRow.Range.Cells(1, targetColMap("Antecipação")).Value = ""
+    newRow.Range.Cells(1, targetColMap("PM")).Value = wsSourceRow.Cells(1, sourceColMap("PM")).Value
+    newRow.Range.Cells(1, targetColMap("Status")).Value = "ADD. MACRO"
+
 End Sub
 
 Sub UpdateRowIfEmpty(wsTarget As Worksheet, rowIndex As Long, colDict As Object, _
