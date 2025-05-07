@@ -121,16 +121,8 @@ ErrSection = "completeInformationFromAnalisys40-" & i
             ' Create a new row with OrderLocation "Jaraguá", PhysicalStock 1320 and include Incoterm
             Call AddNewRowFromAnalysis(wsTarget, targetColMap, wsSource.Cells(i, sourceColDict("PEP")).Row, sourceColMap)
         Else
-            
-            ' Check in wich column is the correct value for the following call
-            If wsSource.Cells(i, sourceColDict("Wallet")).Value > wsSource.Cells(i, sourceColDict("Amount")).Value Then
-                amount = wsSource.Cells(i, sourceColDict("Wallet")).Value
-            Else
-                amount = wsSource.Cells(i, sourceColDict("Amount")).Value
-            End If
-        
             ' Update the existing row at index j
-            Call UpdateRowIfEmpty(wsTarget, j, colDict, Date, wsSource.Cells(i, sourceColDict("PEP")).Value, wsSource.Cells(i, sourceColDict("Market")).Value, wsSource.Cells(i, sourceColDict("Client")).Value, wsSource.Cells(i, sourceColDict("SalesDoc")).Value, "", "", wsSource.Cells(i, sourceColDict("Incoterms")).Value, wsSource.Cells(i, sourceColDict("Incoterms2")).Value, wsSource.Cells(i, sourceColDict("PM")).Value, amount, wsSource.Cells(i, sourceColDict("Plant")).Value)
+            Call UpdateRowFromAnalysis(wsTarget, targetColMap, j, wsSource.Cells(i, sourceColDict("PEP")).Row, sourceColMap)
         End If
     Next i
 
@@ -289,82 +281,68 @@ Sub AddNewRowFromAnalysis(wsTarget As Worksheet, targetColMap As Object, wsSourc
 
 End Sub
 
-Sub UpdateRowIfEmpty(wsTarget As Worksheet, rowIndex As Long, colDict As Object, _
-                     sourceDate As Date, sourcePEP As Variant, sourceMarket As Variant, sourceClient As Variant, _
-                     sourceOV As Variant, sourceMaterial As Variant, sourceOrderLocation As String, _
-                     sourceIncoterms As Variant, sourceIncoterms2 As Variant, sourcePM As Variant, _
-                     sourceAmount As Variant, sourcePhysicalStock As Variant)
+Sub UpdateRowFromAnalysis(wsTarget As Worksheet, targetColMap As Object, targetRowIndex As Long, wsSourceRow As Range, sourceColMap As Object)
                 
     With wsTarget
     
-        ' Update Date if empty, Column A
-        If False Then
-            .Cells(rowIndex, colDict("Date")).Value = sourceDate
+        If .Cells(targetRowIndex, targetColMap("DATA")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("DATA")).Value = Day(Date)
         End If
-        
-        ' Update PEP if empty, Column B
-        If .Cells(rowIndex, colDict("PEP")).Value = "" Then
-            .Cells(rowIndex, colDict("PEP")).Value = sourcePEP
+
+        If .Cells(targetRowIndex, targetColMap("ANO")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("ANO")).Value = Year(Date)
         End If
-        
-        ' Update Market if empty, Column C
-        If .Cells(rowIndex, colDict("Market")).Value = "" Then
-            If InStr(1, UCase(sourceMarket), "FORA") > 0 Then
-                .Cells(rowIndex, colDict("Market")).Value = "EXTERNO"
-            Else
-                .Cells(rowIndex, colDict("Market")).Value = "INTERNO"
-            End If
+
+        If .Cells(targetRowIndex, targetColMap("MÊS")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("MÊS")).Value = Month(Date)
         End If
-        
-        ' Update Client if empty, Column D
-        If .Cells(rowIndex, colDict("Client")).Value = "" Then
-            .Cells(rowIndex, colDict("Client")).Value = sourceClient
+
+        If .Cells(targetRowIndex, targetColMap("NOTA")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("NOTA")).Value = ""
         End If
-        
-        ' Update OV if empty, Column E
-        If .Cells(rowIndex, colDict("OV")).Value = "" Then
-            .Cells(rowIndex, colDict("OV")).Value = sourceOV
+
+        If .Cells(targetRowIndex, targetColMap("DATA FIM")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("DATA FIM")).Value = ""
         End If
-        
-        ' For ZETO (and ZVA1) update if both are empty, Column G
-        If .Cells(rowIndex, colDict("ZETO")).Value <> "" And .Cells(rowIndex, colDict("ZVA1")).Value <> "" Then
-            If .Cells(rowIndex, colDict("Market")).Value = "INTERNO" Then
-                .Cells(rowIndex, colDict("ZETO")).Value = ""
-                .Cells(rowIndex, colDict("ZVA1")).Value = sourceMaterial
-            ElseIf .Cells(rowIndex, colDict("Market")).Value = "EXTERNO" Then
-                .Cells(rowIndex, colDict("ZETO")).Value = sourceMaterial
-                .Cells(rowIndex, colDict("ZVA1")).Value = ""
-            End If
+
+        If .Cells(targetRowIndex, targetColMap("DATA DOC.")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("DATA DOC.")).Value = ""
         End If
-        
-        ' Update OrderLocation if empty, Column I
-        If .Cells(rowIndex, colDict("OrderLocation")).Value = "" Then
-            .Cells(rowIndex, colDict("OrderLocation")).Value = sourceOrderLocation
+
+        If .Cells(targetRowIndex, targetColMap("ORDEM DE VENDA")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("ORDEM DE VENDA")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("Doc. Vendas")).Value
         End If
-        
-        ' Update Incoterm if provided and the cell is empty, Column J
-        If .Cells(rowIndex, colDict("Incoterm")).Value = "" Then
-            .Cells(rowIndex, colDict("Incoterm")).Value = sourceIncoterms
+
+        If .Cells(targetRowIndex, targetColMap("DATA PREP")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("DATA PREP")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("Data Prep.")).Value
         End If
-        
-        ' Update Incoterm2 if provided and the cell is empty, Column K
-        If .Cells(rowIndex, colDict("Incoterm2")).Value = "" Then
-            .Cells(rowIndex, colDict("Incoterm2")).Value = sourceIncoterms2
+
+        If .Cells(targetRowIndex, targetColMap("VALOR (BRL)")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("VALOR (BRL)")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("Valor")).Value
         End If
-        
-        ' Update PM if provided and the cell is empty, Column L
-        If .Cells(rowIndex, colDict("PM")).Value = "" Then
-            .Cells(rowIndex, colDict("PM")).Value = sourcePM
+
+        If .Cells(targetRowIndex, targetColMap("CLIENTE")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("CLIENTE")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("Cliente")).Value
         End If
-    
-        ' Update Amount if provided and the cell is empty, Column M
-        If .Cells(rowIndex, colDict("Amount")).Value = "" Then
-            .Cells(rowIndex, colDict("Amount")).Value = sourceAmount
+
+        If .Cells(targetRowIndex, targetColMap("PEP")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("PEP")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("PEP")).Value
         End If
-        
-        ' Update PhysicalStock if empty, Column T
-        If .Cells(rowIndex, colDict("PhysicalStock")).Value = "" Then
-            .Cells(rowIndex, colDict("PhysicalStock")).Value = sourcePhysicalStock
+
+        If .Cells(targetRowIndex, targetColMap("SCORECARD")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("SCORECARD")).Value = ""
+        End If
+
+        If .Cells(targetRowIndex, targetColMap("Antecipação")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("Antecipação")).Value = ""
+        End If
+
+        If .Cells(targetRowIndex, targetColMap("PM")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("PM")).Value = wsSourceRow.Cells(targetRowIndex, sourceColMap("PM")).Value
+        End If
+
+        If .Cells(targetRowIndex, targetColMap("Status")).Value = "" Then
+            .Cells(targetRowIndex, targetColMap("Status")).Value = "UPD. MACRO"
         End If
     End With
 End Sub
