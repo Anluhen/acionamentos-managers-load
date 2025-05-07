@@ -5,7 +5,6 @@ Public SapGuiAuto As Object
 Public SAPApplication As Object
 Public Connection As Object
 Public session As Object
-Public colDict As Object ' Dictionary to store column names and indexes
 
 Sub AtualizarDados()
     
@@ -48,14 +47,8 @@ ErrSection = "variableDeclarations10"
         wsTarget.ListObjects(1).AutoFilter.ShowAllData
     End If
     
-    Call GetAllColumnIndexes(wsTarget)
-    
-    For Each key In colDict.Keys
-        If colDict(key) = 0 Then
-            MsgBox "Uma coluna não foi encontrada." & vbCrLf & key & vbCrLf & "A macro será encerrada.", vbExclamation, "Falha ao Mapear Colunas"
-            GoTo CleanExit
-        End If
-    Next key
+    Dim targetColMap As Object
+    Set targetColMap = MapTargetColumnHeaders()
     
     ' Setup SAP and check if it is running
     Do While Not SetupSAPScripting
@@ -64,12 +57,10 @@ ErrSection = "variableDeclarations10"
         response = MsgBox("SAP não está acessível. Inicie o SAP e clique em OK para tentar novamente, ou Cancelar para sair.", vbOKCancel + vbExclamation, "Aguardando SAP")
     
         If response = vbCancel Then
-            MsgBox "Execução terminada pelo usuário.", vbInformation
+            MsgBox "Execução encerrada pelo usuário.", vbInformation
             GoTo CleanExit  ' Exit the function or sub
         End If
     Loop
-    
-End Sub
 
 ErrSection = "completeInformationFromAnalisys"
 
@@ -115,11 +106,6 @@ ErrSection = "completeInformationFromAnalisys10"
     targetLastCol = wsTarget.Cells(2, wsSource.Columns.Count).End(xlToLeft).Column
 
 ErrSection = "completeInformationFromAnalisys20"
-
-    ' If "Situação" column not found, exit sub
-    If colDict("Status") = 0 Then
-        GoTo ErrorHandler
-    End If
     
     ' Find the last used row and column in the source sheet
     sourceLastRow = wsSource.Cells(wsSource.Rows.Count, 2).End(xlUp).Row
@@ -127,9 +113,8 @@ ErrSection = "completeInformationFromAnalisys20"
 
 ErrSection = "completeInformationFromAnalisys30"
 
-    ' Find the source columns
-    Set sourceColDict = CreateObject("Scripting.Dictionary")
-    Set sourceColDict = GetSourceColumnIndexes(wsSource)
+    Dim sourceColMap As Object
+    Set sourceColMap = MapSourceColumnHeaders()
     
     For Each key In sourceColDict.Keys
         If sourceColDict(key) = 0 Then
@@ -403,44 +388,6 @@ Sub UpdateRowIfEmpty(wsTarget As Worksheet, rowIndex As Long, colDict As Object,
     End With
 End Sub
 
-Function GetSourceColumnIndexes(ws As Worksheet, Optional ShowOnMacroList As Boolean = False) As Object
-    Dim SourceColumnIndexes As Object
-    Set SourceColumnIndexes = CreateObject("Scripting.Dictionary")
-    
-    ' Map your internal aliases to actual header names
-    SourceColumnIndexes.Add "Market", GetSourceColumnIndex(ws, "Mercado", 2, SourceColumnIndexes)                     ' Column B
-    'SourceColumnIndexes.Add "YearBI", GetSourceColumnIndex(ws, "Ano BI", 2, SourceColumnIndexes)                      ' Column C
-    'SourceColumnIndexes.Add "MonthBI", GetSourceColumnIndex(ws, "Mês BI", 2, SourceColumnIndexes)                     ' Column D
-    'SourceColumnIndexes.Add "Status", GetSourceColumnIndex(ws, "STATUS", 2, SourceColumnIndexes)                      ' Column E
-    SourceColumnIndexes.Add "PurchaseDoc", GetSourceColumnIndex(ws, "Doc. Compra", 2, SourceColumnIndexes)            ' Column F
-    SourceColumnIndexes.Add "SalesDoc", GetSourceColumnIndex(ws, "Doc. Vendas", 2, SourceColumnIndexes)               ' Column G
-    SourceColumnIndexes.Add "SalesItem", GetSourceColumnIndex(ws, "Item Doc. Venda", 2, SourceColumnIndexes)          ' Column H
-    SourceColumnIndexes.Add "PEP", GetSourceColumnIndex(ws, "PEP", 2, SourceColumnIndexes)                            ' Column I
-    SourceColumnIndexes.Add "Client", GetSourceColumnIndex(ws, "Cliente", 2, SourceColumnIndexes)                     ' Column J
-    SourceColumnIndexes.Add "Incoterms", GetSourceColumnIndex(ws, "Incoterms 1", 2, SourceColumnIndexes)                ' Column K
-    SourceColumnIndexes.Add "Incoterms2", GetSourceColumnIndex(ws, "Incoterms 2", 2, SourceColumnIndexes)                ' Column K
-    SourceColumnIndexes.Add "PrepDate", GetSourceColumnIndex(ws, "Data Prep. Material", 2, SourceColumnIndexes)       ' Column L
-    SourceColumnIndexes.Add "ShipmentDate", GetSourceColumnIndex(ws, "Data Remessa", 2, SourceColumnIndexes)          ' Column M
-    'SourceColumnIndexes.Add "DataAdcB", GetSourceColumnIndex(ws, "Data Adc. B", 2, SourceColumnIndexes)               ' Column N
-    'SourceColumnIndexes.Add "InvoiceDate", GetSourceColumnIndex(ws, "Data NF", 2, SourceColumnIndexes)                ' Column O
-    'SourceColumnIndexes.Add "PCPDate", GetSourceColumnIndex(ws, "Data PCP", 2, SourceColumnIndexes)                   ' Column P
-    'SourceColumnIndexes.Add "RevenueReceivedDate", GetSourceColumnIndex(ws, "Data de Rec.Receita", 2, SourceColumnIndexes) ' Column Q
-    'SourceColumnIndexes.Add "CauseArea", GetSourceColumnIndex(ws, "Área Causadora", 2, SourceColumnIndexes)           ' Column R
-    'SourceColumnIndexes.Add "Reason", GetSourceColumnIndex(ws, "Motivo", 2, SourceColumnIndexes)                      ' Column S
-    'SourceColumnIndexes.Add "Notes", GetSourceColumnIndex(ws, "Observação", 2, SourceColumnIndexes)                   ' Column T
-    'SourceColumnIndexes.Add "PreviousMeeting", GetSourceColumnIndex(ws, "Reunião Anterior", 2, SourceColumnIndexes)   ' Column U
-    'SourceColumnIndexes.Add "Week", GetSourceColumnIndex(ws, "Semana", 2, SourceColumnIndexes)                        ' Column V
-    SourceColumnIndexes.Add "PM", GetSourceColumnIndex(ws, "Funcionário Responsável", 2, SourceColumnIndexes)                              ' Column W
-    SourceColumnIndexes.Add "Wallet", GetSourceColumnIndex(ws, "Vlr. Carteira", 1, SourceColumnIndexes)                       ' Column X
-    SourceColumnIndexes.Add "Amount", GetSourceColumnIndex(ws, "Vlr. ROL", 1, SourceColumnIndexes)
-    SourceColumnIndexes.Add "Plant", GetSourceColumnIndex(ws, "Centro", 2, SourceColumnIndexes)                       ' Column Y
-    SourceColumnIndexes.Add "ProductHierarchy", GetSourceColumnIndex(ws, "Hier. Produto", 2, SourceColumnIndexes)     ' Column Z
-    'SourceColumnIndexes.Add "Month", GetSourceColumnIndex(ws, "Mês", 2, SourceColumnIndexes)                          ' Column AA
-    'SourceColumnIndexes.Add "Year", GetSourceColumnIndex(ws, "Ano", 2, SourceColumnIndexes)                           ' Column AB
-
-    Set GetSourceColumnIndexes = SourceColumnIndexes
-End Function
-
 Function GetSourceColumnIndex(ws As Worksheet, headerName As String, headerRow As Long, sourceColDict As Object) As Long
     Dim col As Range
     Dim alreadyUsed As Boolean
@@ -469,38 +416,68 @@ Function GetSourceColumnIndex(ws As Worksheet, headerName As String, headerRow A
     Next col
 End Function
 
-Sub GetAllColumnIndexes(ws As Worksheet, Optional ShowOnMacroList As Boolean = False)
-    Set colDict = CreateObject("Scripting.Dictionary")
+Public Function MapTargetColumnHeaders() As Object
+    Dim headers As Object
+    Set headers = CreateObject("Scripting.Dictionary")
     
-    ' Map your internal aliases to actual header names
-    colDict.Add "Date", GetColumnIndex(ws, "Data Entrada no Relatório", 2)    ' Column A
-    colDict.Add "PEP", GetColumnIndex(ws, "PEP", 2)                           ' Column B
-    colDict.Add "Market", GetColumnIndex(ws, "Mercado", 2)                    ' Column C
-    colDict.Add "Client", GetColumnIndex(ws, "CLIENTE", 2)                    ' Column D
-    colDict.Add "OV", GetColumnIndex(ws, "OV", 2)                             ' Column E
-    colDict.Add "ZVA1", GetColumnIndex(ws, "ZVA1", 2)                         ' Column F
-    colDict.Add "ZETO", GetColumnIndex(ws, "ZETO", 2)                         ' Column G
-    colDict.Add "PaymentTerms", GetColumnIndex(ws, "Cond Pgto", 2)            ' Column H
-    colDict.Add "OrderLocation", GetColumnIndex(ws, "Fabricação", 2)          ' Column I
-    colDict.Add "Incoterm", GetColumnIndex(ws, "Incoterm", 2)                 ' Column J
-    colDict.Add "Incoterm2", GetColumnIndex(ws, "Incoterm 2", 2)              ' Column K
-    colDict.Add "PM", GetColumnIndex(ws, "PM", 2)                             ' Column L
-    colDict.Add "Amount", GetColumnIndex(ws, "R$", 2)                         ' Column M
-    colDict.Add "BillingResp", GetColumnIndex(ws, "Resp.Fat.", 2)             ' Column N
-    colDict.Add "BillingForecast", GetColumnIndex(ws, "PREV. FAT", 2)         ' Column O
-    colDict.Add "StockStatus", GetColumnIndex(ws, "Situação Estoque", 2)      ' Column P
-    colDict.Add "Checklist", GetColumnIndex(ws, "CheckList", 2)               ' Column Q
-    colDict.Add "Freight", GetColumnIndex(ws, "Frete", 2)                 ' Column R
-    colDict.Add "Status", GetColumnIndex(ws, "Situação", 2)                   ' Column S
-    colDict.Add "PhysicalStock", GetColumnIndex(ws, "Estoque físico atual", 2) ' Column T
-    colDict.Add "ETD", GetColumnIndex(ws, "ETD", 2)                           ' Column U
-    colDict.Add "ShippingDate", GetColumnIndex(ws, "Data Embarque", 2)        ' Column V
-    colDict.Add "ETA", GetColumnIndex(ws, "ETA", 2)                           ' Column W
-    colDict.Add "ShipmentNumber", GetColumnIndex(ws, "nº Embarque", 2)        ' Column X
-    colDict.Add "LogisticsCoord", GetColumnIndex(ws, "Coord. Logística", 2)    ' Column Y
-    colDict.Add "Notes", GetColumnIndex(ws, "Observações", 2)                 ' Column Z
+    ' Add each header from the provided table to the dictionary,
+    ' mapping it to its column position.
+    headers.Add "DATA", 1
+    headers.Add "ANO", 2
+    headers.Add "MÊS", 3
+    headers.Add "NOTA", 4
+    headers.Add "DATA FIM", 5
+    headers.Add "DATA DOC.", 6
+    headers.Add "ORDEM DE VENDA", 7
+    headers.Add "DATA PREP", 8
+    headers.Add "VALOR (BRL)", 9
+    headers.Add "CLIENTE", 10
+    headers.Add "PEP", 11
+    headers.Add "SCORECARD", 12
+    headers.Add "Antecipação", 13
+    headers.Add "PM", 14
+    headers.Add "Status", 15
+
+    Set MapTargetColumnHeaders = headers
+End Function
+
+Public Function MapSourceColumnHeaders() As Object
+    Dim headers As Object
+    Set headers = CreateObject("Scripting.Dictionary")
     
-End Sub
+    ' Add each header from the provided table to the dictionary,
+    ' mapping it to its column position.
+    
+    headers.Add "ID", 1                          ' Column B
+    headers.Add "Mercado", 2                     ' Column C
+    headers.Add "Ano BI", 3                      ' Column D
+    headers.Add "Mês BI", 4                      ' Column E
+    headers.Add "STATUS", 5                      ' Column F
+    headers.Add "Doc. Compra", 6                 ' Column G
+    headers.Add "Doc. Vendas", 7                 ' Column H
+    headers.Add "Item Doc. Venda", 8             ' Column I
+    headers.Add "PEP", 9                         ' Column J
+    headers.Add "Cliente", 10                    ' Column K
+    headers.Add "Incoterms", 11                  ' Column L
+    headers.Add "Data Prep. Material", 12        ' Column M
+    headers.Add "Data Remessa", 13               ' Column N
+    headers.Add "Data Adc. B ", 14               ' Column O
+    headers.Add "Data NF ", 15                   ' Column P
+    headers.Add "Data PCP", 16                   ' Column Q
+    headers.Add "Data de Rec.Receita ", 17       ' Column R
+    headers.Add "Área Causadora", 18             ' Column S
+    headers.Add "Motivo", 19                     ' Column T
+    headers.Add "Observação", 20                 ' Column U
+    headers.Add "Situação", 21                   ' Column V
+    headers.Add "PM", 22                         ' Column W
+    headers.Add "Valor", 23                      ' Column X
+    headers.Add "Centro", 24                     ' Column Y
+    headers.Add "Hier. Produto", 25              ' Column Z
+    headers.Add "Mês", 26                        ' Column AA
+    headers.Add "Ano", 27                        ' Column AB
+
+    Set MapSourceColumnHeaders = headers
+End Function
 
 Function GetColumnIndex(ws As Worksheet, headerName As String, Optional headerRow As Long = 1) As Long
     Dim col As Range
