@@ -103,13 +103,6 @@ ErrSection = "completeInformationFromAnalisys30"
     Dim sourceColMap As Object
     Set sourceColMap = MapSourceColumnHeaders()
     
-    For Each key In sourceColDict.Keys
-        If sourceColDict(key) = 0 Then
-            MsgBox "Uma coluna do Analysis não foi encontrada." & vbCrLf & key & vbCrLf & "Os dados não serão atualizados do Analysis.", vbExclamation, "Falha ao Mapear Colunas"
-            GoTo completeLocationInfo
-        End If
-    Next key
-    
     ' Loop through rows from bottom to top to avoid skipping rows after deletion
     For i = sourceLastRow To 2 Step -1 ' Assuming headers are in row 1
 ErrSection = "completeInformationFromAnalisys40-" & i
