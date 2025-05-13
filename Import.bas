@@ -263,9 +263,9 @@ Sub AddNewRowFromAnalysis(wsTarget As Worksheet, targetColMap As Object, wsSourc
     Set newRow = tbl.ListRows.Add
     
     ' Populate the new row with values
-    newRow.Range.Cells(1, targetColMap("DATA")).Value = Day(Date)
-    newRow.Range.Cells(1, targetColMap("ANO")).Value = Year(Date)
-    newRow.Range.Cells(1, targetColMap("MÊS")).Value = Month(Date)
+    ' newRow.Range.Cells(1, targetColMap("DATA")).Value = ""
+    ' newRow.Range.Cells(1, targetColMap("ANO")).Value = ""
+    ' newRow.Range.Cells(1, targetColMap("MÊS")).Value = ""
     ' newRow.Range.Cells(1, targetColMap("NOTA")).Value = ""
     ' newRow.Range.Cells(1, targetColMap("DATA FIM")).Value = ""
     ' newRow.Range.Cells(1, targetColMap("DATA DOC.")).Value = ""
@@ -286,15 +286,15 @@ Sub UpdateRowFromAnalysis(wsTarget As Worksheet, targetColMap As Object, targetR
     With wsTarget
     
         If .Cells(targetRowIndex, targetColMap("DATA")).Value = "" Then
-            .Cells(targetRowIndex, targetColMap("DATA")).Value = Day(Date)
+            .Cells(targetRowIndex, targetColMap("DATA")).Value = ""
         End If
 
         If .Cells(targetRowIndex, targetColMap("ANO")).Value = "" Then
-            .Cells(targetRowIndex, targetColMap("ANO")).Value = Year(Date)
+            .Cells(targetRowIndex, targetColMap("ANO")).Value = ""
         End If
 
         If .Cells(targetRowIndex, targetColMap("MÊS")).Value = "" Then
-            .Cells(targetRowIndex, targetColMap("MÊS")).Value = Month(Date)
+            .Cells(targetRowIndex, targetColMap("MÊS")).Value = ""
         End If
 
         If .Cells(targetRowIndex, targetColMap("NOTA")).Value = "" Then
